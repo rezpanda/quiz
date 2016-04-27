@@ -1,0 +1,10 @@
+exports.question=funcion(req,res){
+	res.render('quizes/question', {pregunta: 'Capital de Italia'});
+};
+exports.answer=funcion(req,res){
+	if req.query.respuesta === 'Roma'){
+		res.render('quizes/question', {respuesta: 'HELL YEA!'});
+	}else{
+		res.render('quizes/question', {respuesta: 'HELL NO!'});
+	}
+};
