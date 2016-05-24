@@ -16,9 +16,3 @@ header{ text-align: center; }
 nav{ text-align: center; }
 section{ text-align: left; }
 footer{ text-align: center; }
-div > img {
-  width: auto;
-  height : auto;
-  max-height: 100%;
-  max-width: 100%;
-}
