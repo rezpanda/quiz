@@ -22,7 +22,8 @@ var Quiz = sequelize.import(path.join(__dirname, 'quiz'));
 sequelize.sync().then(function(){ 
 	return Quiz.count().then(function(c){
 		if(c===0){
-			return Quiz.create({ question: "Captital de Italia", answer: "Roma"}).then(function(){
+			return Quiz.bulkCreate([{ question: "Captital de Italia", answer: "Roma"},
+									{ question: "Captital de España", answer: "Madrid"}]).then(function(){
 				console.log("Base de datos incializada con datos");
 			});
 		}

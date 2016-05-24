@@ -1,6 +1,4 @@
 var path = require('path');
-
-//Cargar modelito ORM
 var Sequelize = require('sequelize');
 
 var url, storage;
@@ -10,7 +8,7 @@ if(!process.env.DATABASE_URL){
 	storage = "quiz.sqlite";
 } else {
 	url = process.env.DATABASE_URL;
-	storage=process.env.DATABASE_STORAGE || "";
+	storage= process.env.DATABASE_STORAGE || "";
 }
 
 
@@ -18,14 +16,15 @@ if(!process.env.DATABASE_URL){
 var sequelize = new Sequelize (url,{storage: storage, omitNull:true});
 
 // Importar la definición de la table Quiz de quiz.js
-var Quiz= sequalize.import(path.join(__dirmane, 'quiz'));
+var Quiz = sequelize.import(path.join(__dirname, 'quiz'));
 
 // sequelize.sync() crea e inicia la tabla de preguntas en DB
 sequelize.sync().then(function(){ 
 	return Quiz.count().then(function(c){
 		if(c===0){
-			return Quiz.create({ question: 'Captital de Italia', answer: 'Roma'}).then(function(){
-				console.log('Base de datos incializada con datos');
+			return Quiz.bulkCreate([{ question: "Captital de Italia", answer: "Roma"},
+									{ question: "Captital de España", answer: "Madrid"}]).then(function(){
+				console.log("Base de datos incializada con datos");
 			});
 		}
 	});
