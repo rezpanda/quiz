@@ -14,9 +14,22 @@
   <body>
   <div id="page">
 
+    <div class="right">
+      <% if (!session.user) { %>
+          <a href="/users/new">Registrarse</a> 
+          <a href="/session">Iniciar sesión</a>
+      <% } else { %>
+          <%= session.user.username %> 
+          <a href="/users/<%= session.user.id %>">Perfil</a>
+          <a href="/session?_method=DELETE">Cerrar sesión</a>
+        <% } %>
+    </div>
+
+
     <header class="main">
     <h2>Quiz: el juego de la vida</h2>
     </header>
+
 
     <nav class="main" role="navigation">
       <a href="/">Inicio</a>
@@ -25,6 +38,7 @@
       <a href="/author">Autor</a>
     </nav>
     
+
     <section>
     <% if(messages.info) { %>
       <article id="flashinfo">
