@@ -3,32 +3,47 @@ var Sequelize = require('sequelize');
 
 // Autoload el quiz asociado a :quizId
 exports.load = function(req, res, next, quizId) {
-	models.Quiz.findById(quizId, {attributes: ['id', 'question', 'answer', 'AuthorId'],
-								include: [models.Comment]})
-  		.then(function(quiz) {
-      		if (quiz) {
-        		req.quiz = quiz;
-        		next();
-      		} else { 
-      			throw new Error('No existe quizId=' + quizId);
-      		}
+  models.Quiz.findById(quizId, {attributes: ['id', 'question', 'answer', 'AuthorId'],
+                include: [models.Comment]})
+      .then(function(quiz) {
+          if (quiz) {
+            req.quiz = quiz;
+            next();
+          } else { 
+            throw new Error('No existe quizId=' + quizId);
+          }
         })
         .catch(function(error) { next(error); });
+};
+
+// MW que permite acciones solamente si al usuario logeado es admin o es el autor del quiz.
+exports.ownershipRequired = function(req, res, next){
+
+    var isAdmin      = req.session.user.isAdmin;
+    var quizAuthorId = req.quiz.AuthorId;
+    var loggedUserId = req.session.user.id;
+
+    if (isAdmin || quizAuthorId === loggedUserId) {
+        next();
+    } else {
+      console.log('Operación prohibida: El usuario logeado no es el autor del quiz ni un administrador.');
+      res.send(403);
+    }
 };
 
 
 // GET /quizzes.:format?
 exports.index = function(req, res, next) {
 
-	var search = req.query.search || '';
+  var search = req.query.search || '';
 
-	if (search !== "") {
-		search_sql = "%"+search.replace(/ /g, "%")+"%";
+  if (search !== "") {
+    search_sql = "%"+search.replace(/ /g, "%")+"%";
 
-		models.Quiz.findAll({where: ["question like ?", search_sql],
+    models.Quiz.findAll({where: ["question like ?", search_sql],
                         order: ['question'],
                         attributes: ['id', 'question', 'answer', 'AuthorId']})
-			.then(function(quizzes) {
+      .then(function(quizzes) {
         if (!req.params.format || req.params.format === "html") {
             res.render('quizzes/index.ejs', { quizzes: quizzes,
                         search: search});
@@ -40,15 +55,15 @@ exports.index = function(req, res, next) {
           throw new Error('No se admite format=' + req.params.format);
         }
 
-			})
-			.catch(function(error) {
-				next(error);
-			});
-	}
-	else {
-		models.Quiz.findAll({attributes: ['id', 'question', 'answer', 'AuthorId']})
-			.then(function(quizzes) {
-				if (!req.params.format || req.params.format === "html") {
+      })
+      .catch(function(error) {
+        next(error);
+      });
+  }
+  else {
+    models.Quiz.findAll({attributes: ['id', 'question', 'answer', 'AuthorId']})
+      .then(function(quizzes) {
+        if (!req.params.format || req.params.format === "html") {
             res.render('quizzes/index.ejs', { quizzes: quizzes,
                         search: search});
         }
@@ -58,11 +73,11 @@ exports.index = function(req, res, next) {
         else {
           throw new Error('No se admite format=' + req.params.format);
         }
-			})
-			.catch(function(error) {
-				next(error);
-			});
-	}
+      })
+      .catch(function(error) {
+        next(error);
+      });
+  }
 
 };
 
@@ -70,10 +85,10 @@ exports.index = function(req, res, next) {
 // GET /quizzes/:id.:format?
 exports.show = function(req, res, next) {
   if (!req.params.format || req.params.format === "html") {
-  	var answer = req.query.answer || '';
+    var answer = req.query.answer || '';
 
-  	res.render('quizzes/show', {quiz: req.quiz,
-  								answer: answer});
+    res.render('quizzes/show', {quiz: req.quiz,
+                  answer: answer});
   }
   else if (req.params.format === "json") {
     res.send(JSON.stringify(req.quiz));
@@ -88,13 +103,13 @@ exports.show = function(req, res, next) {
 // GET /quizzes/:id/check
 exports.check = function(req, res, next) {
 
-	var answer = req.query.answer || "";
+  var answer = req.query.answer || "";
 
-	var result = answer === req.quiz.answer ? 'Correcta' : 'Incorrecta';
+  var result = answer === req.quiz.answer ? 'Correcta' : 'Incorrecta';
 
-	res.render('quizzes/result', { quiz: req.quiz, 
-								   result: result, 
-								   answer: answer });
+  res.render('quizzes/result', { quiz: req.quiz, 
+                   result: result, 
+                   answer: answer });
 };
 
 
@@ -115,9 +130,9 @@ exports.create = function(req, res, next) {
 
   // guarda en DB los campos pregunta y respuesta de quiz
   quiz.save({fields: ["question", "answer", "AuthorId"]})
-  	.then(function(quiz) {
-  		req.flash('success', 'Quiz creado con éxito.');
-    	res.redirect('/quizzes');  // res.redirect: Redirección HTTP a lista de preguntas
+    .then(function(quiz) {
+      req.flash('success', 'Quiz creado con éxito.');
+      res.redirect('/quizzes');  // res.redirect: Redirección HTTP a lista de preguntas
     })
     .catch(Sequelize.ValidationError, function(error) {
 
@@ -129,9 +144,9 @@ exports.create = function(req, res, next) {
       res.render('quizzes/new', {quiz: quiz});
     })
     .catch(function(error) {
-    	req.flash('error', 'Error al crear un Quiz: '+error.message);
-		next(error);
-	});  
+      req.flash('error', 'Error al crear un Quiz: '+error.message);
+    next(error);
+  });  
 };
 
 
