@@ -3,15 +3,20 @@ var Sequelize = require('sequelize');
 
 var url = require('url');
 
+var sessionTimeout = 2 * 60 * 1000 // Tiempo de expiración de sesión de usuario
 
-var sessionTimeout = 2* 60 * 1000 // Tiempo de expiración de sesión de usuario
+// Middleware: Se requiere hacer login.
+exports.loginRequired = function (req, res, next) {
+    if (req.session.user) {
+        next();
+    } else {
+        res.redirect('/session?redir=' + (req.param('redir') || req.url));
+    }
+};
+
 
 /*
  * Autenticar un usuario: Comprueba si el usuario esta registrado en users
- *
- * Devuelve una Promesa que busca el usuario con el login dado y comprueba su password.
- * Si la autenticación es correcta, la promesa se satisface devuelve un objeto con el User.
- * Si la autenticación falla, la promesa se satisface pero devuelve null.
  */
 var authenticate = function(login, password) {
     
@@ -27,6 +32,7 @@ var authenticate = function(login, password) {
 
 
 // GET /session   -- Formulario de login
+
 exports.new = function(req, res, next) {
     var redir = req.query.redir || 
                 url.parse(req.headers.referer || "/").pathname;
@@ -50,7 +56,7 @@ exports.create = function(req, res, next) {
     authenticate(login, password)
         .then(function(user) {
             if (user) {
-              // Crear req.session.user y guardar campos id y username
+              // Crear req.session.user y guardar campos id, username y expireTime
               // La sesión se define por la existencia de: req.session.user
               var expireTime = Date.now() + sessionTimeout;
               req.session.user = {id:user.id, username:user.username, expireTime:expireTime};
@@ -76,6 +82,8 @@ exports.destroy = function(req, res, next) {
     
     res.redirect("/session"); // redirect a login
 };
+
+// Autologout
 
 exports.autologout = function(req, res, next) {
 
